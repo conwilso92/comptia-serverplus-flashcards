@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompTIA Server+ Flashcards</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+  .app { max-width: 700px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 1.4rem; text-align: center; margin-bottom: 4px; color: #f1f5f9; }
+  .subtitle { text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 24px; }
+  .cat-bar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 20px; }
+  .cat-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 0.78rem; cursor: pointer; transition: all 0.2s; }
+  .cat-btn:hover { border-color: #60a5fa; color: #60a5fa; }
+  .cat-btn.active { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+  .progress-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .progress-bar { flex: 1; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 3px; transition: width 0.4s; }
+  .progress-text { font-size: 0.8rem; color: #64748b; white-space: nowrap; }
+  .card-container { perspective: 1000px; margin-bottom: 20px; }
+  .card { position: relative; width: 100%; min-height: 220px; cursor: pointer; transition: transform 0.5s; transform-style: preserve-3d; }
+  .card.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+  .card-front { background: linear-gradient(145deg, #1e293b, #162032); border: 1px solid #334155; }
+  .card-back { background: linear-gradient(145deg, #1a2744, #152238); border: 1px solid #2d4a6f; transform: rotateY(180deg); }
+  .card-cat { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: #60a5fa; margin-bottom: 16px; font-weight: 600; }
+  .card-question { font-size: 1.15rem; line-height: 1.5; color: #f1f5f9; }
+  .card-answer { font-size: 1.2rem; line-height: 1.6; color: #a5f3fc; font-weight: 600; }
+  .card-answer .acr-full { display: block; font-size: 0.85rem; color: #7dd3fc; font-weight: 400; margin-top: 6px; }
+  .card-hint { font-size: 0.75rem; color: #475569; margin-top: 20px; }
+  .conf-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .conf-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .conf-btn:hover { transform: translateY(-1px); }
+  .conf-miss { background: #7f1d1d; color: #fca5a5; }
+  .conf-miss:hover { background: #991b1b; }
+  .conf-shaky { background: #78350f; color: #fcd34d; }
+  .conf-shaky:hover { background: #92400e; }
+  .conf-got { background: #14532d; color: #86efac; }
+  .conf-got:hover { background: #166534; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; }
+  .nav-btn { padding: 10px 22px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .nav-btn:hover { background: #334155; color: #e2e8f0; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .shuffle-btn { padding: 10px 22px; border-radius: 10px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 0.85rem; }
+  .shuffle-btn:hover { border-color: #8b5cf6; color: #a78bfa; }
+  .stats { display: flex; justify-content: center; gap: 24px; margin-top: 24px; padding: 16px; background: #1e293b; border-radius: 12px; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 1.3rem; font-weight: 700; }
+  .stat-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .stat-miss .stat-num { color: #f87171; }
+  .stat-shaky .stat-num { color: #fbbf24; }
+  .stat-got .stat-num { color: #4ade80; }
+  .stat-unseen .stat-num { color: #64748b; }
+  .filter-mode { text-align: center; font-size: 0.78rem; color: #64748b; margin-bottom: 6px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+  .empty-state p { margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const CARDS = [
+  // ========== HARDWARE INSTALLATION & MANAGEMENT (18%) ==========
+  { cat: "Hardware", q: "What is a rack unit (U)?", a: "1.75 inches of vertical rack space" },
+  { cat: "Hardware", q: "What is a 1U server?", a: "A server that takes up 1.75 inches of rack space" },
+  { cat: "Hardware", q: "What is a blade server?", a: "A thin modular server that slides into a blade enclosure sharing power and cooling" },
+  { cat: "Hardware", q: "What is a tower server?", a: "A standalone server in an upright case, like a desktop PC" },
+  { cat: "Hardware", q: "What is a rack-mounted server?", a: "A server designed to be installed in a standard 19-inch equipment rack" },
+  { cat: "Hardware", q: "What does ECC RAM do?", a: "ECC<span class='acr-full'>(Error-Correcting Code — detects and corrects single-bit memory errors)</span>" },
+  { cat: "Hardware", q: "Why is ECC RAM required in servers?", a: "Prevents data corruption in memory-critical environments" },
+  { cat: "Hardware", q: "What is the difference between registered and unbuffered RAM?", a: "Registered (RDIMM) has a buffer for stability in multi-slot configs; unbuffered (UDIMM) does not" },
+  { cat: "Hardware", q: "What does hot-swappable mean?", a: "A component can be replaced without powering down the server" },
+  { cat: "Hardware", q: "Name three hot-swappable server components.", a: "Hard drives, power supplies, fans" },
+  { cat: "Hardware", q: "What is a backplane?", a: "A circuit board that connects multiple drive bays to the server controller" },
+  { cat: "Hardware", q: "What is an HBA?", a: "HBA<span class='acr-full'>(Host Bus Adapter — connects a server to external storage like a SAN)</span>" },
+  { cat: "Hardware", q: "What is a RAID controller?", a: "Hardware or software that manages RAID arrays for redundancy and/or performance" },
+  { cat: "Hardware", q: "What RAID level mirrors two drives?", a: "RAID 1" },
+  { cat: "Hardware", q: "What RAID level stripes data with no redundancy?", a: "RAID 0" },
+  { cat: "Hardware", q: "What RAID level stripes with parity across 3+ drives?", a: "RAID 5" },
+  { cat: "Hardware", q: "What RAID level uses double parity across 4+ drives?", a: "RAID 6" },
+  { cat: "Hardware", q: "What RAID level combines mirroring and striping (minimum 4 drives)?", a: "RAID 10 (1+0)" },
+  { cat: "Hardware", q: "What is a hot spare in RAID?", a: "A standby drive that automatically replaces a failed drive in the array" },
+  { cat: "Hardware", q: "What is a DAS?", a: "DAS<span class='acr-full'>(Direct Attached Storage — storage connected directly to the server)</span>" },
+  { cat: "Hardware", q: "What is a NAS?", a: "NAS<span class='acr-full'>(Network Attached Storage — file-level storage shared over the network)</span>" },
+  { cat: "Hardware", q: "What is a SAN?", a: "SAN<span class='acr-full'>(Storage Area Network — block-level storage accessed over a dedicated high-speed network)</span>" },
+  { cat: "Hardware", q: "What protocol does a SAN typically use?", a: "iSCSI or Fibre Channel<span class='acr-full'>(iSCSI = Internet Small Computer Systems Interface)</span>" },
+  { cat: "Hardware", q: "What is the difference between NAS and SAN?", a: "NAS is file-level over Ethernet; SAN is block-level over dedicated fabric" },
+  { cat: "Hardware", q: "What is a PDU in a server room?", a: "PDU<span class='acr-full'>(Power Distribution Unit — distributes power to rack equipment)</span>" },
+  { cat: "Hardware", q: "What is a UPS?", a: "UPS<span class='acr-full'>(Uninterruptible Power Supply — battery backup for short-term power loss)</span>" },
+  { cat: "Hardware", q: "What provides long-term backup power during an outage?", a: "Generator" },
+  { cat: "Hardware", q: "What is redundant power supply?", a: "Two or more PSUs so the server continues running if one fails" },
+  { cat: "Hardware", q: "What CPU feature allows one physical core to act as two logical cores?", a: "Hyper-Threading / SMT<span class='acr-full'>(Simultaneous Multi-Threading)</span>" },
+  { cat: "Hardware", q: "What is a multi-socket server?", a: "A server motherboard that supports more than one physical CPU" },
+  { cat: "Hardware", q: "What is IPMI used for?", a: "IPMI<span class='acr-full'>(Intelligent Platform Management Interface — remote out-of-band server management)</span>" },
+  { cat: "Hardware", q: "What is iLO?", a: "iLO<span class='acr-full'>(Integrated Lights-Out — HPE's out-of-band management interface)</span>" },
+  { cat: "Hardware", q: "What is iDRAC?", a: "iDRAC<span class='acr-full'>(Integrated Dell Remote Access Controller — Dell's out-of-band management)</span>" },
+  { cat: "Hardware", q: "What is out-of-band management?", a: "Managing a server remotely even when the OS is down or unresponsive" },
+  { cat: "Hardware", q: "What is the purpose of a KVM switch?", a: "KVM<span class='acr-full'>(Keyboard Video Mouse — lets one set of peripherals control multiple servers)</span>" },
+  { cat: "Hardware", q: "What is UEFI?", a: "UEFI<span class='acr-full'>(Unified Extensible Firmware Interface — modern replacement for BIOS)</span>" },
+  { cat: "Hardware", q: "What partition table does UEFI use?", a: "GPT<span class='acr-full'>(GUID Partition Table)</span>" },
+  { cat: "Hardware", q: "What partition table does legacy BIOS use?", a: "MBR<span class='acr-full'>(Master Boot Record)</span>" },
+  { cat: "Hardware", q: "What is the maximum drive size MBR supports?", a: "2 TB" },
+  { cat: "Hardware", q: "What does NVMe connect through?", a: "PCIe lanes<span class='acr-full'>(Non-Volatile Memory Express — fastest SSD interface)</span>" },
+  { cat: "Hardware", q: "What is a TPM?", a: "TPM<span class='acr-full'>(Trusted Platform Module — hardware chip that stores encryption keys)</span>" },
+
+  // ========== SERVER ADMINISTRATION (30%) ==========
+  { cat: "Administration", q: "What is the minimum info needed to install a server OS?", a: "HCL compatibility, minimum hardware requirements, installation media" },
+  { cat: "Administration", q: "What is an HCL?", a: "HCL<span class='acr-full'>(Hardware Compatibility List — vendor-approved hardware for an OS)</span>" },
+  { cat: "Administration", q: "What are the three OS installation types?", a: "Clean install, upgrade, image-based deployment" },
+  { cat: "Administration", q: "What is PXE boot?", a: "PXE<span class='acr-full'>(Preboot Execution Environment — boots and installs an OS over the network)</span>" },
+  { cat: "Administration", q: "What is an unattended installation?", a: "Automated OS install using an answer file with preconfigured settings" },
+  { cat: "Administration", q: "What Windows file system is standard for servers?", a: "NTFS<span class='acr-full'>(New Technology File System)</span>" },
+  { cat: "Administration", q: "What file system does modern Linux use?", a: "ext4<span class='acr-full'>(Fourth Extended File System)</span>" },
+  { cat: "Administration", q: "What file system is used for network file sharing on Linux?", a: "NFS<span class='acr-full'>(Network File System)</span>" },
+  { cat: "Administration", q: "What protocol is used for Windows network file sharing?", a: "SMB/CIFS<span class='acr-full'>(Server Message Block / Common Internet File System — port 445)</span>" },
+  { cat: "Administration", q: "What is a server role?", a: "A specific function assigned to a server (DNS, DHCP, file server, print server, web server, etc.)" },
+  { cat: "Administration", q: "What is Active Directory?", a: "AD<span class='acr-full'>(Active Directory — Microsoft's directory service for managing domain users, groups, and policies)</span>" },
+  { cat: "Administration", q: "What protocol does Active Directory use for authentication?", a: "Kerberos<span class='acr-full'>(Port 88)</span>" },
+  { cat: "Administration", q: "What protocol queries directory services?", a: "LDAP<span class='acr-full'>(Lightweight Directory Access Protocol — port 389)</span>" },
+  { cat: "Administration", q: "What is a domain controller?", a: "A server running Active Directory that authenticates users and enforces policies" },
+  { cat: "Administration", q: "What is GPO?", a: "GPO<span class='acr-full'>(Group Policy Object — applies configurations and restrictions to users/computers in AD)</span>" },
+  { cat: "Administration", q: "What is a Type 1 hypervisor?", a: "Bare-metal hypervisor that runs directly on hardware<span class='acr-full'>(e.g., VMware ESXi, Hyper-V, Proxmox)</span>" },
+  { cat: "Administration", q: "What is a Type 2 hypervisor?", a: "Hosted hypervisor that runs on top of an OS<span class='acr-full'>(e.g., VirtualBox, VMware Workstation)</span>" },
+  { cat: "Administration", q: "What is a virtual machine?", a: "A software-based computer running inside a physical host" },
+  { cat: "Administration", q: "What is a VM snapshot?", a: "A point-in-time copy of a VM's state (memory, disk, settings)" },
+  { cat: "Administration", q: "What is VM migration?", a: "Moving a running VM from one physical host to another" },
+  { cat: "Administration", q: "What is VMware's live migration called?", a: "vMotion" },
+  { cat: "Administration", q: "What is Microsoft's live migration called?", a: "Live Migration (Hyper-V)" },
+  { cat: "Administration", q: "What is resource overcommitment?", a: "Allocating more virtual resources than physically available" },
+  { cat: "Administration", q: "What is a container?", a: "A lightweight isolated environment that packages an app and its dependencies<span class='acr-full'>(e.g., Docker)</span>" },
+  { cat: "Administration", q: "How do containers differ from VMs?", a: "Containers share the host OS kernel; VMs each have their own OS" },
+  { cat: "Administration", q: "What manages container orchestration at scale?", a: "Kubernetes" },
+  { cat: "Administration", q: "What scripting language is standard for Windows server automation?", a: "PowerShell<span class='acr-full'>(.ps1 files)</span>" },
+  { cat: "Administration", q: "What scripting language is standard for Linux server automation?", a: "Bash<span class='acr-full'>(.sh files)</span>" },
+  { cat: "Administration", q: "What is IaC?", a: "IaC<span class='acr-full'>(Infrastructure as Code — automating provisioning through scripts instead of manual config)</span>" },
+  { cat: "Administration", q: "What does SNMP do?", a: "SNMP<span class='acr-full'>(Simple Network Management Protocol — monitors network devices using agents and OIDs)</span>" },
+  { cat: "Administration", q: "What does Syslog do?", a: "Syslog<span class='acr-full'>(Sends log messages to a central server — port 514)</span>" },
+  { cat: "Administration", q: "What is NTP used for?", a: "NTP<span class='acr-full'>(Network Time Protocol — synchronizes clocks across devices — port 123)</span>" },
+  { cat: "Administration", q: "What is a baseline in server monitoring?", a: "Documented normal performance metrics used for comparison" },
+  { cat: "Administration", q: "What is DHCP?", a: "DHCP<span class='acr-full'>(Dynamic Host Configuration Protocol — automatically assigns IP addresses — ports 67/68)</span>" },
+  { cat: "Administration", q: "What is DNS?", a: "DNS<span class='acr-full'>(Domain Name System — resolves domain names to IP addresses — port 53)</span>" },
+  { cat: "Administration", q: "What is a VLAN?", a: "VLAN<span class='acr-full'>(Virtual LAN — logically segments a switch into separate broadcast domains)</span>" },
+  { cat: "Administration", q: "What is NIC teaming?", a: "Combining multiple NICs into one logical interface for redundancy and bandwidth" },
+  { cat: "Administration", q: "What is link aggregation?", a: "Bonding multiple network links for increased throughput<span class='acr-full'>(LACP = Link Aggregation Control Protocol)</span>" },
+  { cat: "Administration", q: "What licensing model charges per physical CPU socket?", a: "Per-socket licensing" },
+  { cat: "Administration", q: "What licensing model charges a recurring fee?", a: "Subscription-based licensing" },
+  { cat: "Administration", q: "What licensing model is a one-time purchase with no expiration?", a: "Perpetual licensing" },
+  { cat: "Administration", q: "What licensing model covers all users at a location?", a: "Site-based licensing" },
+  { cat: "Administration", q: "What is an SLA?", a: "SLA<span class='acr-full'>(Service Level Agreement — defines expected uptime, performance, and support response times)</span>" },
+  { cat: "Administration", q: "What does a CMDB track?", a: "CMDB<span class='acr-full'>(Configuration Management Database — tracks all IT assets, configs, and relationships)</span>" },
+
+  // ========== SECURITY & DISASTER RECOVERY (24%) ==========
+  { cat: "Security", q: "What are the three parts of the CIA triad?", a: "Confidentiality, Integrity, Availability" },
+  { cat: "Security", q: "What does confidentiality ensure?", a: "Only authorized users can access data" },
+  { cat: "Security", q: "What does integrity ensure?", a: "Data has not been altered or tampered with" },
+  { cat: "Security", q: "What does availability ensure?", a: "Systems and data are accessible when needed" },
+  { cat: "Security", q: "What is the principle of least privilege?", a: "Users get only the minimum access needed to do their job" },
+  { cat: "Security", q: "What is MFA?", a: "MFA<span class='acr-full'>(Multi-Factor Authentication — requires two or more factors: know, have, are)</span>" },
+  { cat: "Security", q: "What is SSO?", a: "SSO<span class='acr-full'>(Single Sign-On — one login grants access to multiple systems)</span>" },
+  { cat: "Security", q: "What is RBAC?", a: "RBAC<span class='acr-full'>(Role-Based Access Control — permissions assigned by role, not individual user)</span>" },
+  { cat: "Security", q: "What is an ACL?", a: "ACL<span class='acr-full'>(Access Control List — rules defining who can access what resources)</span>" },
+  { cat: "Security", q: "What does server hardening mean?", a: "Reducing the attack surface by disabling unnecessary services, ports, and accounts" },
+  { cat: "Security", q: "What is a security patch?", a: "A software update that fixes a known vulnerability" },
+  { cat: "Security", q: "What is a firewall?", a: "A device or software that filters traffic based on rules (ports, IPs, protocols)" },
+  { cat: "Security", q: "What does an IDS do?", a: "IDS<span class='acr-full'>(Intrusion Detection System — monitors and alerts on threats)</span>" },
+  { cat: "Security", q: "What does an IPS do?", a: "IPS<span class='acr-full'>(Intrusion Prevention System — monitors and blocks threats)</span>" },
+  { cat: "Security", q: "What is a HIDS?", a: "HIDS<span class='acr-full'>(Host-based Intrusion Detection System — monitors a single server)</span>" },
+  { cat: "Security", q: "What is encryption at rest?", a: "Data is encrypted while stored on disk" },
+  { cat: "Security", q: "What is encryption in transit?", a: "Data is encrypted while traveling over the network (TLS/SSL)" },
+  { cat: "Security", q: "What does TLS provide?", a: "TLS<span class='acr-full'>(Transport Layer Security — encrypts data in transit between client and server)</span>" },
+  { cat: "Security", q: "What is a certificate authority (CA)?", a: "CA<span class='acr-full'>(Certificate Authority — issues and validates digital certificates for TLS/SSL)</span>" },
+  { cat: "Security", q: "What is a self-signed certificate?", a: "A certificate signed by the server itself, not a trusted CA" },
+  { cat: "Security", q: "What is disk encryption?", a: "Encrypting an entire drive so data is unreadable without the key" },
+  { cat: "Security", q: "What is BitLocker?", a: "Microsoft's full disk encryption for Windows, uses TPM" },
+  { cat: "Security", q: "What is LUKS?", a: "LUKS<span class='acr-full'>(Linux Unified Key Setup — standard disk encryption for Linux)</span>" },
+  { cat: "Security", q: "What should be disabled during server hardening?", a: "Unused services, ports, protocols, default accounts, and unnecessary software" },
+  { cat: "Security", q: "What is a BIOS/UEFI password?", a: "Password required to access or change firmware settings" },
+  { cat: "Security", q: "What is a bootloader password?", a: "Prevents unauthorized OS boot or recovery mode access" },
+  { cat: "Security", q: "What is physical security for servers?", a: "Locked server rooms, badge access, surveillance cameras, cable locks, mantraps" },
+  { cat: "Security", q: "What is the 3-2-1 backup rule?", a: "3 copies, 2 different media types, 1 offsite" },
+  { cat: "Security", q: "What backup type copies everything?", a: "Full backup" },
+  { cat: "Security", q: "What backup copies changes since the last backup of any type?", a: "Incremental" },
+  { cat: "Security", q: "What backup copies changes since the last full backup?", a: "Differential" },
+  { cat: "Security", q: "What is the GFS backup rotation?", a: "GFS<span class='acr-full'>(Grandfather-Father-Son — daily, weekly, monthly backup rotation scheme)</span>" },
+  { cat: "Security", q: "What is RPO?", a: "RPO<span class='acr-full'>(Recovery Point Objective — maximum acceptable data loss measured in time)</span>" },
+  { cat: "Security", q: "What is RTO?", a: "RTO<span class='acr-full'>(Recovery Time Objective — maximum acceptable downtime)</span>" },
+  { cat: "Security", q: "What is MTTR?", a: "MTTR<span class='acr-full'>(Mean Time to Repair — average time to fix a failure)</span>" },
+  { cat: "Security", q: "What is MTBF?", a: "MTBF<span class='acr-full'>(Mean Time Between Failures — average uptime between failures)</span>" },
+  { cat: "Security", q: "What is a hot site?", a: "Fully operational DR site that mirrors production — fastest recovery" },
+  { cat: "Security", q: "What is a warm site?", a: "Infrastructure in place but no active equipment — days to recover" },
+  { cat: "Security", q: "What is a cold site?", a: "Empty facility, just space — weeks to recover" },
+  { cat: "Security", q: "What is a BCP?", a: "BCP<span class='acr-full'>(Business Continuity Plan — how the organization continues operating during a disaster)</span>" },
+  { cat: "Security", q: "What is a DRP?", a: "DRP<span class='acr-full'>(Disaster Recovery Plan — how IT systems are restored after a disaster)</span>" },
+  { cat: "Security", q: "What is a BIA?", a: "BIA<span class='acr-full'>(Business Impact Analysis — identifies critical systems and the impact of their failure)</span>" },
+  { cat: "Security", q: "What is data replication?", a: "Copying data in real time to another location for redundancy" },
+  { cat: "Security", q: "What is proper server decommissioning?", a: "Back up data, remove from network, wipe drives, document, update asset inventory" },
+  { cat: "Security", q: "What data destruction method uses magnetism?", a: "Degaussing (HDDs only, not SSDs)" },
+  { cat: "Security", q: "What data destruction method is most secure for SSDs?", a: "Cryptographic erase or physical destruction" },
+  { cat: "Security", q: "What is a data retention policy?", a: "Rules defining how long data must be kept before deletion" },
+
+  // ========== HIGH AVAILABILITY ==========
+  { cat: "High Availability", q: "What is high availability?", a: "Designing systems to minimize downtime and maintain continuous operation" },
+  { cat: "High Availability", q: "What is failover?", a: "Automatic switch to a standby system when the primary fails" },
+  { cat: "High Availability", q: "What is a failover cluster?", a: "Multiple servers working together so one takes over if another fails" },
+  { cat: "High Availability", q: "What is active/active configuration?", a: "Both servers handle traffic simultaneously for load balancing and availability" },
+  { cat: "High Availability", q: "What is active/passive configuration?", a: "One server handles traffic while the other stands by for failover" },
+  { cat: "High Availability", q: "What is a heartbeat in clustering?", a: "A signal between cluster nodes to confirm each is alive and responsive" },
+  { cat: "High Availability", q: "What is load balancing?", a: "Distributing traffic across multiple servers for performance and availability" },
+  { cat: "High Availability", q: "What does a load balancer use to distribute traffic?", a: "Algorithms like round-robin, least connections, or weighted" },
+  { cat: "High Availability", q: "What is FHRP?", a: "FHRP<span class='acr-full'>(First Hop Redundancy Protocol — provides router failover using a virtual IP)</span>" },
+  { cat: "High Availability", q: "What is HSRP?", a: "HSRP<span class='acr-full'>(Hot Standby Router Protocol — Cisco's proprietary FHRP)</span>" },
+  { cat: "High Availability", q: "What is VRRP?", a: "VRRP<span class='acr-full'>(Virtual Router Redundancy Protocol — open standard FHRP)</span>" },
+  { cat: "High Availability", q: "What is multipathing?", a: "Using multiple physical paths to storage for redundancy" },
+  { cat: "High Availability", q: "What is five nines availability?", a: "99.999% uptime — approximately 5 minutes of downtime per year" },
+
+  // ========== TROUBLESHOOTING (28%) ==========
+  { cat: "Troubleshooting", q: "What is step 1 of the troubleshooting methodology?", a: "Identify the problem" },
+  { cat: "Troubleshooting", q: "What is step 2 of the troubleshooting methodology?", a: "Establish a theory of probable cause" },
+  { cat: "Troubleshooting", q: "What is step 3 of the troubleshooting methodology?", a: "Test the theory" },
+  { cat: "Troubleshooting", q: "What is step 4 of the troubleshooting methodology?", a: "Establish a plan of action" },
+  { cat: "Troubleshooting", q: "What is step 5 of the troubleshooting methodology?", a: "Implement the solution or escalate" },
+  { cat: "Troubleshooting", q: "What is step 6 of the troubleshooting methodology?", a: "Verify full system functionality" },
+  { cat: "Troubleshooting", q: "What is step 7 of the troubleshooting methodology?", a: "Document findings, actions, and outcomes" },
+  { cat: "Troubleshooting", q: "A server won't POST — what do you check first?", a: "Power connections, RAM seating, CPU seating, beep codes" },
+  { cat: "Troubleshooting", q: "What do beep codes indicate during POST?", a: "POST<span class='acr-full'>(Power-On Self-Test — beep codes identify specific hardware failures)</span>" },
+  { cat: "Troubleshooting", q: "A server keeps rebooting unexpectedly — likely cause?", a: "Overheating, failing PSU, or OS crash (check logs and thermals)" },
+  { cat: "Troubleshooting", q: "A RAID array shows degraded status — what happened?", a: "One drive has failed — the array is running without full redundancy" },
+  { cat: "Troubleshooting", q: "What should you do when a RAID array is degraded?", a: "Replace the failed drive immediately and rebuild the array" },
+  { cat: "Troubleshooting", q: "What does an amber/orange light on a server typically mean?", a: "Warning or degraded state (check logs for specific issue)" },
+  { cat: "Troubleshooting", q: "What does a red light on a server typically mean?", a: "Critical failure requiring immediate attention" },
+  { cat: "Troubleshooting", q: "A server has no network connectivity — first check?", a: "Link lights on NIC and switch port, cable connection" },
+  { cat: "Troubleshooting", q: "A server gets a 169.254.x.x address — cause?", a: "DHCP failure<span class='acr-full'>(APIPA = Automatic Private IP Addressing)</span>" },
+  { cat: "Troubleshooting", q: "Users can ping the server by IP but not by hostname — cause?", a: "DNS resolution failure" },
+  { cat: "Troubleshooting", q: "A server's hard drive makes clicking noises — what does this mean?", a: "Mechanical drive failure — replace immediately, back up if possible" },
+  { cat: "Troubleshooting", q: "What utility monitors hard drive health?", a: "S.M.A.R.T.<span class='acr-full'>(Self-Monitoring, Analysis, and Reporting Technology)</span>" },
+  { cat: "Troubleshooting", q: "A VM is running extremely slow — what do you check?", a: "Host resource utilization (CPU, RAM, disk I/O) and overcommitment" },
+  { cat: "Troubleshooting", q: "What is VM sprawl?", a: "Uncontrolled creation of VMs that wastes resources and complicates management" },
+  { cat: "Troubleshooting", q: "A server shows high CPU usage but no obvious process — possible cause?", a: "Background service, malware, or runaway process (check task manager/top)" },
+  { cat: "Troubleshooting", q: "What is a kernel panic (Linux) / BSOD (Windows)?", a: "A critical OS crash requiring restart — check logs for root cause" },
+  { cat: "Troubleshooting", q: "What Windows log shows system errors and warnings?", a: "Event Viewer — System log" },
+  { cat: "Troubleshooting", q: "What Linux command shows system logs?", a: "journalctl or /var/log/syslog" },
+  { cat: "Troubleshooting", q: "What command tests network connectivity?", a: "ping" },
+  { cat: "Troubleshooting", q: "What command shows the path packets take to a destination?", a: "tracert (Windows) / traceroute (Linux)" },
+  { cat: "Troubleshooting", q: "What command shows active network connections?", a: "netstat" },
+  { cat: "Troubleshooting", q: "What command resolves DNS names?", a: "nslookup" },
+  { cat: "Troubleshooting", q: "What command shows Windows network configuration?", a: "ipconfig /all" },
+  { cat: "Troubleshooting", q: "What command shows Linux network configuration?", a: "ifconfig (or ip addr)" },
+  { cat: "Troubleshooting", q: "A server's performance degrades over time — possible cause?", a: "Memory leak, log file growth, disk fragmentation, or resource exhaustion" },
+  { cat: "Troubleshooting", q: "What is a memory leak?", a: "An application that keeps consuming RAM without releasing it" },
+  { cat: "Troubleshooting", q: "What causes a broadcast storm?", a: "A switching loop — prevented by STP<span class='acr-full'>(Spanning Tree Protocol)</span>" },
+  { cat: "Troubleshooting", q: "What is a common cause of intermittent server connectivity?", a: "Failing NIC, loose cable, or duplex mismatch" },
+  { cat: "Troubleshooting", q: "A server service won't start after a reboot — what do you check?", a: "Service startup type, dependencies, and event logs for errors" },
+  { cat: "Troubleshooting", q: "What is a cable tester used for?", a: "Verifying cable continuity, correct wiring, and identifying faults" },
+  { cat: "Troubleshooting", q: "What is a toner probe used for?", a: "Tracing a cable through walls, ceilings, or bundles" },
+  { cat: "Troubleshooting", q: "What is a multimeter used for in server troubleshooting?", a: "Measuring voltage, continuity, and resistance in power circuits" },
+
+  // ========== PORTS ==========
+  { cat: "Ports", q: "What port does FTP use?", a: "20/21<span class='acr-full'>(File Transfer Protocol — 20 data, 21 control)</span>" },
+  { cat: "Ports", q: "What port does SSH use?", a: "22<span class='acr-full'>(Secure Shell)</span>" },
+  { cat: "Ports", q: "What port does Telnet use?", a: "23<span class='acr-full'>(Insecure — use SSH instead)</span>" },
+  { cat: "Ports", q: "What port does SMTP use?", a: "25<span class='acr-full'>(Simple Mail Transfer Protocol)</span>" },
+  { cat: "Ports", q: "What port does DNS use?", a: "53<span class='acr-full'>(Domain Name System)</span>" },
+  { cat: "Ports", q: "What port does DHCP use?", a: "67/68<span class='acr-full'>(Dynamic Host Configuration Protocol)</span>" },
+  { cat: "Ports", q: "What port does HTTP use?", a: "80<span class='acr-full'>(HyperText Transfer Protocol)</span>" },
+  { cat: "Ports", q: "What port does Kerberos use?", a: "88<span class='acr-full'>(Active Directory authentication)</span>" },
+  { cat: "Ports", q: "What port does NTP use?", a: "123<span class='acr-full'>(Network Time Protocol)</span>" },
+  { cat: "Ports", q: "What port does SNMP use?", a: "161<span class='acr-full'>(Simple Network Management Protocol)</span>" },
+  { cat: "Ports", q: "What port does LDAP use?", a: "389<span class='acr-full'>(Lightweight Directory Access Protocol)</span>" },
+  { cat: "Ports", q: "What port does HTTPS use?", a: "443<span class='acr-full'>(HyperText Transfer Protocol Secure)</span>" },
+  { cat: "Ports", q: "What port does SMB use?", a: "445<span class='acr-full'>(Server Message Block)</span>" },
+  { cat: "Ports", q: "What port does Syslog use?", a: "514<span class='acr-full'>(System Logging Protocol)</span>" },
+  { cat: "Ports", q: "What port does LDAPS use?", a: "636<span class='acr-full'>(LDAP over SSL/TLS)</span>" },
+  { cat: "Ports", q: "What port does iSCSI use?", a: "3260<span class='acr-full'>(Internet Small Computer Systems Interface)</span>" },
+  { cat: "Ports", q: "What port does RDP use?", a: "3389<span class='acr-full'>(Remote Desktop Protocol)</span>" },
+];
+
+let deck = [...CARDS];
+let idx = 0;
+let flipped = false;
+let filter = "All";
+let scores = {};
+
+function getFiltered() {
+  if (filter === "All") return [...CARDS];
+  if (filter === "Missed") return CARDS.filter(c => scores[c.q] === "miss");
+  if (filter === "Shaky") return CARDS.filter(c => scores[c.q] === "shaky");
+  return CARDS.filter(c => c.cat === filter);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function doShuffle() { deck = shuffle(getFiltered()); idx = 0; flipped = false; render(); }
+function setFilter(f) { filter = f; deck = getFiltered(); idx = 0; flipped = false; render(); }
+function flipCard() { flipped = !flipped; render(); }
+function prev() { if (idx > 0) { idx--; flipped = false; render(); } }
+function next() { if (idx < deck.length - 1) { idx++; flipped = false; render(); } }
+
+function score(level) {
+  if (deck.length === 0) return;
+  scores[deck[idx].q] = level;
+  if (idx < deck.length - 1) { idx++; flipped = false; }
+  render();
+}
+
+function getStats() {
+  let miss = 0, shaky = 0, got = 0, unseen = 0;
+  CARDS.forEach(c => {
+    const s = scores[c.q];
+    if (s === "miss") miss++; else if (s === "shaky") shaky++; else if (s === "got") got++; else unseen++;
+  });
+  return { miss, shaky, got, unseen };
+}
+
+const cats = ["All", ...new Set(CARDS.map(c => c.cat)), "Missed", "Shaky"];
+
+function render() {
+  const app = document.getElementById("app");
+  const stats = getStats();
+  const total = deck.length;
+  const progress = total > 0 ? ((idx + 1) / total * 100) : 0;
+  const card = deck[idx];
+
+  let catBtns = cats.map(c =>
+    `<button class="cat-btn ${filter === c ? 'active' : ''}" onclick="setFilter('${c}')">${c}${c === "Missed" ? ` (${stats.miss})` : c === "Shaky" ? ` (${stats.shaky})` : ''}</button>`
+  ).join('');
+
+  let cardHTML = '';
+  if (!card) {
+    cardHTML = `<div class="empty-state"><p>No cards in this category yet.</p><p>Study more and mark cards to see them here!</p></div>`;
+  } else {
+    cardHTML = `
+      <div class="card-container">
+        <div class="card ${flipped ? 'flipped' : ''}" onclick="flipCard()">
+          <div class="card-face card-front">
+            <div class="card-cat">${card.cat}</div>
+            <div class="card-question">${card.q}</div>
+            <div class="card-hint">tap to reveal</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="card-cat">Answer</div>
+            <div class="card-answer">${card.a}</div>
+          </div>
+        </div>
+      </div>
+      <div class="conf-row">
+        <button class="conf-btn conf-miss" onclick="score('miss')">Missed</button>
+        <button class="conf-btn conf-shaky" onclick="score('shaky')">Shaky</button>
+        <button class="conf-btn conf-got" onclick="score('got')">Got it</button>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    <h1>Server+ Flashcards</h1>
+    <div class="subtitle">SK0-005 · ${CARDS.length} cards · one question, one answer</div>
+    <div class="cat-bar">${catBtns}</div>
+    ${total > 0 ? `
+    <div class="filter-mode">${filter !== "All" && filter !== "Missed" && filter !== "Shaky" ? filter + ' · ' : ''}${idx + 1} of ${total}</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="progress-text">${Math.round(progress)}%</div>
+    </div>` : ''}
+    ${cardHTML}
+    ${card ? `
+    <div class="nav-row">
+      <button class="nav-btn" onclick="prev()" ${idx === 0 ? 'disabled' : ''}>← Prev</button>
+      <button class="shuffle-btn" onclick="doShuffle()">Shuffle</button>
+      <button class="nav-btn" onclick="next()" ${idx >= total - 1 ? 'disabled' : ''}>Next →</button>
+    </div>` : ''}
+    <div class="stats">
+      <div class="stat stat-miss"><div class="stat-num">${stats.miss}</div><div class="stat-label">Missed</div></div>
+      <div class="stat stat-shaky"><div class="stat-num">${stats.shaky}</div><div class="stat-label">Shaky</div></div>
+      <div class="stat stat-got"><div class="stat-num">${stats.got}</div><div class="stat-label">Got It</div></div>
+      <div class="stat stat-unseen"><div class="stat-num">${stats.unseen}</div><div class="stat-label">Unseen</div></div>
+    </div>`;
+}
+
+doShuffle();
+</script>
+</body>
+</html>
